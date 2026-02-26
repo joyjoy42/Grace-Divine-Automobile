@@ -1,14 +1,9 @@
 #!/bin/bash
 
-# Ensure database directory exists
-mkdir -p /var/www/html/database
+# Ensure storage and bootstrap directories are writable
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Ensure SQLite file exists and is writable
-if [ ! -f /var/www/html/database/database.sqlite ]; then
-    touch /var/www/html/database/database.sqlite
-fi
-chown www-data:www-data /var/www/html/database/database.sqlite
-chmod 664 /var/www/html/database/database.sqlite
 
 # Cache configuration and routes for production
 php artisan config:cache
