@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
+    dos2unix \
     zip \
     unzip \
     git \
@@ -48,30 +49,24 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy only composer files first for better layer caching
-COPY composer.json composer.lock ./
-
-# Install production PHP dependencies (early to fail fast and cache)
-# Added --ignore-platform-reqs to avoid conflicts with local dev environments
-RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs --verbose
-
-# Copy the rest of the application files
+# Copy application files (Copying all at once to ensure autoloader has all files)
 COPY . .
 
 # Copy built assets from frontend stage
 COPY --from=frontend-build /app/public/build ./public/build
 
-# Final composer cleanup/optimization (if needed)
-RUN composer dump-autoload --no-dev --optimize
+# Install production PHP dependencies
+# Adding --no-progress to reduce log noise and memory usage
+RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs --no-progress --verbose
 
-# Set permissions
+# Set permissions and fix line endings for entrypoint
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN dos2unix /var/www/html/docker-entrypoint.sh && chmod +x /var/www/html/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 80
 
-# Use production entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Move entrypoint to bin
+RUN mv /var/www/html/docker-entrypoint.sh /usr/local/bin/
 
 ENTRYPOINT ["docker-entrypoint.sh"]

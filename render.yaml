@@ -14,12 +14,13 @@ services:
         sync: false
       - key: DB_CONNECTION
         value: pgsql
-      - key: DATABASE_URL
+      - key: DB_URL
         fromDatabase:
           name: grace-db
           property: connectionString
       - key: SESSION_DRIVER
         value: database
+
     # disk: # No longer needed with managed database
 
 databases:
