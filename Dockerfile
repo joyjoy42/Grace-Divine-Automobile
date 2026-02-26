@@ -9,6 +9,11 @@ RUN npm run build
 # Stage 2: PHP Runtime
 FROM php:8.2-apache-bullseye
 
+# Set environment variables
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_MEMORY_LIMIT=-1 \
+    APACHE_DOCUMENT_ROOT=/var/www/html/public
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
@@ -33,9 +38,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
-
 # Set Apache DocumentRoot to Laravel's public folder
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
@@ -45,18 +48,24 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
+# Copy only composer files first for better layer caching
+COPY composer.json composer.lock ./
+
+# Install production PHP dependencies (early to fail fast and cache)
+# Added --ignore-platform-reqs to avoid conflicts with local dev environments
+RUN composer install --no-dev --no-scripts --optimize-autoloader --ignore-platform-reqs --verbose
+
+# Copy the rest of the application files
 COPY . .
 
 # Copy built assets from frontend stage
 COPY --from=frontend-build /app/public/build ./public/build
 
-# Install production PHP dependencies
-RUN composer install --no-dev --no-scripts --optimize-autoloader
+# Final composer cleanup/optimization (if needed)
+RUN composer dump-autoload --no-dev --optimize
 
-# Create SQLite database file if it doesn't exist and set permissions
-RUN mkdir -p database && touch database/database.sqlite
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Expose port
 EXPOSE 80
