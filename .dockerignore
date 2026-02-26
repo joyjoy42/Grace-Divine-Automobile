@@ -1,0 +1,16 @@
+.git
+.env
+node_modules
+vendor
+public/build
+storage/*.sqlite
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/logs/*
+.phpunit.result.cache
+.vscode
+Dockerfile
+docker-entrypoint.sh
+render.yaml

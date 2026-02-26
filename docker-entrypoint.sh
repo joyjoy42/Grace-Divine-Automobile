@@ -15,6 +15,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Run package discovery
+php artisan package:discover --ansi
+
+
 # Run migrations
 php artisan migrate --force
 

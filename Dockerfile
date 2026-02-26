@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libsqlite3-dev \
     libzip-dev \
+    libicu-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
     zip \
     unzip \
     git \
@@ -23,10 +26,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_sqlite bcmath intl mbstring gd zip
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_sqlite bcmath intl mbstring gd zip
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
+
 
 # Set Apache DocumentRoot to Laravel's public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
@@ -46,7 +51,7 @@ COPY . .
 COPY --from=frontend-build /app/public/build ./public/build
 
 # Install production PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --no-scripts --optimize-autoloader
 
 # Create SQLite database file if it doesn't exist and set permissions
 RUN mkdir -p database && touch database/database.sqlite
