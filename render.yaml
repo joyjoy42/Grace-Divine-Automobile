@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: grace-divine-automobile
+    env: docker
+    plan: free # Change to 'starter' if you need persistent disks
+    buildCommand: null # Build is handled by Dockerfile
+    startCommand: null # Entrypoint handles it
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        fromRepo: true
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: database/database.sqlite
+      - key: SESSION_DRIVER
+        value: file # Database driver for sessions might fail on restarts without persistent disk
+    # disk: # Uncomment below for persistent SQLite data (Paid plans only)
+    #   name: sqlite-data
+    #   mountPath: /var/www/html/database
+    #   sizeGB: 1
