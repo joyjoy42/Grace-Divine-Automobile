@@ -1,3 +1,5 @@
+<?php
+
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FormationController;
 use Illuminate\Support\Facades\Route;
